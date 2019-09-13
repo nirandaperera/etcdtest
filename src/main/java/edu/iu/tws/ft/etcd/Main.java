@@ -7,8 +7,6 @@ import io.etcd.jetcd.Client;
 import io.etcd.jetcd.Util;
 import io.etcd.jetcd.Watch;
 import io.etcd.jetcd.watch.WatchEvent;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
@@ -17,9 +15,10 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CountDownLatch;
+import java.util.logging.Logger;
 
 public class Main {
-    private static final Logger LOGGER = LoggerFactory.getLogger(Main.class);
+    private static final Logger LOGGER = Logger.getLogger(Main.class.getName());
 
     public static void main(String[] args) {
         Args cmd = new Args();
@@ -33,11 +32,13 @@ public class Main {
         ByteSequence key = ByteSequence.from(cmd.key, StandardCharsets.UTF_8);
         Collection<URI> endpoints = Util.toURIs(cmd.endpoints);
 
+        LOGGER.info("SSSS");
+
         Watch.Listener listener = Watch.listener(response -> {
-            LOGGER.info("Watching for key={}", cmd.key);
+            LOGGER.info("Watching for key=" + cmd.key);
 
             for (WatchEvent event : response.getEvents()) {
-                LOGGER.info("type={}, key={}, value={}",
+                LOGGER.info(String.format("type=%s, key=%s, value=%s",
                         event.getEventType(),
                         Optional.ofNullable(event.getKeyValue().getKey())
                                 .map(bs -> bs.toString(StandardCharsets.UTF_8))
@@ -45,7 +46,7 @@ public class Main {
                         Optional.ofNullable(event.getKeyValue().getValue())
                                 .map(bs -> bs.toString(StandardCharsets.UTF_8))
                                 .orElse("")
-                );
+                ));
             }
 
             latch.countDown();
@@ -57,7 +58,7 @@ public class Main {
 
             latch.await();
         } catch (Exception e) {
-            LOGGER.error("Watching Error {}", e);
+            LOGGER.severe("Watching Error " + e);
             System.exit(1);
         }
     }
